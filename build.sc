@@ -4,7 +4,7 @@ import mill._, os._, scalalib._, publish._
 import scala.util.Properties
 
 object meta {
-  val crossVersions = Seq("2.13.12")
+  val crossVersions = Seq("2.13.16")
 
   implicit val wd: Path = pwd
 
@@ -23,7 +23,7 @@ object docker extends Cross[Docker](meta.crossVersions)
 trait Docker extends CrossScalaModule with PublishModule {
   def publishVersion = meta.publishVersion
 
-  def artifactName = "mill-docker"
+  override def artifactName = "mill-docker"
 
   def pomSettings = PomSettings(
     description = "Dockerize java applications on Mill builds",
@@ -39,4 +39,6 @@ trait Docker extends CrossScalaModule with PublishModule {
   override def compileIvyDeps = Agg(
     ivy"com.lihaoyi::mill-scalalib:${mill.main.BuildInfo.millVersion}"
   )
+
+  override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-deprecation")
 }
