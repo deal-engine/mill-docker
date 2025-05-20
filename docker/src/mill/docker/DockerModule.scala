@@ -4,25 +4,24 @@ import mill._
 import mill.scalalib.{Assembly, JavaModule}
 
 trait DockerModule extends JavaModule {
-
   def finalMainClass: T[String]
   def assembly: T[PathRef]
 
   def dockerTag: T[String]
-  def dockerMain = T[String] { finalMainClass() }
-  def dockerJavaOpts = T[Seq[String]] { Seq() }
-  def dockerMainArgs = T[Seq[String]] { Seq() }
+  def dockerMain: T[String] = T[String] { finalMainClass() }
+  def dockerJavaOpts: T[Seq[String]] = T[Seq[String]] { Seq.empty }
+  def dockerMainArgs: T[Seq[String]] = T[Seq[String]] { Seq.empty }
 
   def dockerJar = T[PathRef] {
     Assembly.createAssembly(
       inputPaths = Agg.from(localClasspath().map(_.path)),
       prependShellScript = "" /* no prepend script */,
-      base = Some(upstreamAssembly().path),
+      base = Some(upstreamAssembly2().pathRef.path),
       assemblyRules = assemblyRules
     )
   }
 
-  def dockerBaseImage: T[String] = "gcr.io/distroless/java:latest"
+  def dockerBaseImage: T[String]
 
   def dockerFile: T[String] = s"""
     |FROM ${dockerBaseImage()}
@@ -33,13 +32,9 @@ trait DockerModule extends JavaModule {
     """.stripMargin
 
 
-  private def joinEscaped(strings:Seq[String], trailing: String = ""):String = {
-    if (strings.isEmpty) {
-      ""
-    } else {
-      strings.mkString("\"", "\", \"", "\"") ++ trailing
-    }
-  }
+  private def joinEscaped(strings:Seq[String], trailing: String = ""): String =
+    if (strings.isEmpty) ""
+    else strings.mkString("\"", "\", \"", "\"") ++ trailing
 
   def dockerBuild = T {
     val dest = T.ctx().dest
@@ -51,13 +46,12 @@ trait DockerModule extends JavaModule {
     val jar: PathRef = dockerJar()
     os.copy(jar.path, dest/"app.jar")
 
-    os.proc('docker, 'build, "-f", file, "-t", tag, dest).call()
+    os.proc("docker", "build", "-f", file, "-t", tag, dest).call()
     (jar, file, tag)
   }
 
   def dockerPush = T {
     val (_, _, tag) = dockerBuild()
-    os.proc('docker, 'push, tag).call()
+    os.proc("docker", "push", tag).call()
   }
-
 }

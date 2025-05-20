@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.0
+
+- Upgrade to mill 0.12.14
+- Upgrade to scala 2.13.16
+- Address deprecations / polish DockerModule
+
 ## 0.7.0
 
 - Upgrade to mill 0.11.6
